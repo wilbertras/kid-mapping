@@ -1,18 +1,22 @@
 from ppadb.client import Client as AdbClient
+import matplotlib.pyplot as plt
+from datetime import datetime
+import functions as ft
+from copy import copy
+import tkinter as tk
+import numpy as np
+import itertools
 import pyvisa
 import pygame
-import itertools
-import numpy as np
-import functions as ft
 import time
-import matplotlib.pyplot as plt
-from copy import copy
-import sys
 import json
+import sys
+import os
 
 
 class Mapping:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.add_scans()
         self.add_phone()
         self.add_vna()
@@ -108,6 +112,32 @@ class Mapping:
         else:
             print("Cancelled.")
 
+    def timestamp(self):
+        year = datetime.now().year
+        month = datetime.now().month
+        day = datetime.now().day
+        hour = datetime.now().hour
+        minute = datetime.now().minute
+        return '_%d%02d%02d_%02dh%02d' % (year, month, day, hour, minute)
+
+    def create_directory(self, base_name):
+        dir_name = base_name
+        counter = 1
+        while os.path.exists(dir_name):
+            dir_name = f"{base_name}({counter})"
+            counter += 1
+        os.makedirs(dir_name)
+        return dir_name
+
+    def select_directory(self, initial_dir=None):
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        if not initial_dir:
+            initial_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
+        selected_dir = tk.filedialog.askdirectory(title="Select Directory", initialdir=initial_dir)
+        root.destroy()
+        return selected_dir
+
     def start(self, test=False):
         self.test = test
         pygame.init()
@@ -123,12 +153,12 @@ class Mapping:
         linecolor = next(colorkey_cycler)
         bgcolor = 'black'
 
-        width, height = 600, 500
+        width, height = 700, 720
         column_width = width // 2
         small_box_height = height // 8
-        big_box_height = height // 2
-        small_font_size = 20
-        big_font_size = 30
+        big_box_height = height // 6
+        small_font_size = 25
+        big_font_size = 25
         screen = pygame.display.set_mode((width, height))
 
         def draw_text_boxes(text_list, bgcolor, linecolor):
@@ -141,9 +171,9 @@ class Mapping:
                     font_size = big_font_size
                     y = 0
                 else:
-                    y = big_box_height + (row-1)*small_box_height
-                    BOX_height = small_box_height
-                    font_size = small_font_size
+                    y = big_box_height + (row-1)*big_box_height
+                    BOX_height = big_box_height
+                    font_size = big_font_size
                 x = col * column_width
                 pygame.draw.rect(screen, bgcolor, (x, y, column_width, BOX_height), 0)
                 pygame.draw.rect(screen, linecolor, (x, y, column_width, BOX_height), 1)
@@ -152,10 +182,11 @@ class Mapping:
                 
                 # Render each line of text
                 for j, line in enumerate(lines):
-                    if j==0:
-                        font_size = big_font_size
-                    else:
-                        font_size = small_font_size
+                    if len(lines) > 2:
+                        if (j==0) or (j==1 and len(lines)==3) :
+                            font_size = big_font_size
+                        else:
+                            font_size = small_font_size
                     FONT = pygame.font.Font(None, font_size)
                     text_surface = FONT.render(line, True, linecolor)
                     text_rect = text_surface.get_rect(center=(x + column_width // 2, y + (j * font_size) + (BOX_height // 2)))
@@ -216,16 +247,18 @@ class Mapping:
                 restart = 0
 
             text_list = [
-            'X, Y = ' + str(x) + ', ' + str(y) + '\n Move = up,down,left,right',
-            '# scans = ' + str(nr_yscanned + nr_xscanned),
-            'dX = ' + str(dx) + '\n -1/=1/+1 = Z/X/C',
-            'dY = ' + str(dy) + '\n -1/=1/+1 = T/Y/U',
-            'w = ' + str(w) + '\n -1/=1/+1 = Q/W/E',
-            '# steps = ' + str(len(self.xsteps)) + ', ' + str(len(self.ysteps)) + '\n add step = L',
-            'invert screen = I',
-            'Change color = G \nCycles White-Blue-Green-Red-Off',
-            'reset lines = Backspace',
-            'quit and save = Esc',
+            'Position (X, Y)\n(%d, %d)\n Move : up,down,left,right' % (x, y),
+            'Linewidth W\n%d\n -1/=1/+1 : Q/W/E' % w,
+            'Stepsize dX\n%d\n -1/=1/+1 : Z/X/C' % dx,
+            'Stepsize dY\n%d\n -1/=1/+1 : T/Y/U' % dy,
+            '# to scan (#X, #Y)\n(%d, %d)' % (nr_x2scan, nr_y2scan),
+            'Add scan : L \n only works single line or square',
+            'Invert screen : I',
+            'Switch lines-square : S',
+            'Change color : G \nCycles White-Blue-Green-Red-Off',
+            'Scanned (#X, #Y)\n(%d, %d)' % (nr_xscanned, nr_yscanned),
+            'Reset : Backspace',
+            'Quit : Esc',
             ]
             screen.fill(colors[bgcolor])
             draw_text_boxes(text_list, colors[bgcolor], colors[linecolor])
@@ -564,12 +597,12 @@ class Mapping:
                             print('# steps in Y: ', nr_y2scan)
                             print('linewidth: ', w)
                             print('color: ', linecolor)
-                            maindir = ft.select_directory()
+                            maindir = self.select_directory()
                             if maindir:
                                 print(f"Selected directory: {maindir}")
-                            date = ft.timestamp()
-                            datadir = maindir + '/S21s' + date
-                            ft.create_directory(datadir)
+                            date = self.timestamp()
+                            datadir = maindir + '/Mapping_' + self.name + date
+                            self.create_directory(datadir)
                             
                             # Initiate array
                             freqsname = '%s/freqs.npy' % (datadir)
