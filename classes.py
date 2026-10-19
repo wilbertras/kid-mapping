@@ -21,6 +21,9 @@ class Mapping:
         self.add_phone()
         self.add_vna()
 
+    def mirror(self, scrcpy="scrcpy-win64-v211\scrcpy.exe"):
+        os.startfile(scrcpy)
+
     def add_fsweep(self, fstart, fstop, subscanbw, num_points, kidpower, ifbw, calfile=False):
         self.fstart = fstart
         self.fstop = fstop
@@ -189,7 +192,7 @@ class Mapping:
                             font_size = small_font_size
                     FONT = pygame.font.Font(None, font_size)
                     text_surface = FONT.render(line, True, linecolor)
-                    text_rect = text_surface.get_rect(center=(x + column_width // 2, y + (j * font_size) + (BOX_height // 2)))
+                    text_rect = text_surface.get_rect(center=(x + column_width // 2, y + ((j-1) * font_size) + (BOX_height // 2)))
                     screen.blit(text_surface, text_rect)
         
 
