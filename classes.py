@@ -156,10 +156,10 @@ class Mapping:
         linecolor = next(colorkey_cycler)
         bgcolor = 'black'
 
-        width, height = 700, 720
+        width, height = 700, 700
         column_width = width // 2
-        small_box_height = height // 8
-        big_box_height = height // 6
+        small_box_height = height // 7
+        big_box_height = height // 7
         small_font_size = 25
         big_font_size = 25
         screen = pygame.display.set_mode((width, height))
@@ -255,10 +255,12 @@ class Mapping:
             'Stepsize dX\n%d\n -1/=1/+1 : Z/X/C' % dx,
             'Stepsize dY\n%d\n -1/=1/+1 : T/Y/U' % dy,
             '# to scan (#X, #Y)\n(%d, %d)' % (nr_x2scan, nr_y2scan),
-            'Add scan : L \n only works single line or square',
+            'Add scan : L \n only for single lines or square',
             'Invert screen : I',
             'Switch lines-square : S',
             'Change color : G \nCycles White-Blue-Green-Red-Off',
+            'Switch horizontal/vertical : B',
+            'Start measurement : Enter',
             'Scanned (#X, #Y)\n(%d, %d)' % (nr_xscanned, nr_yscanned),
             'Reset : Backspace',
             'Quit : Esc',
