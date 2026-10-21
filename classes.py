@@ -84,7 +84,7 @@ class Mapping:
         elif (not self.vna) or (not self.weinschell) and self.test:
             return [], []
         else:
-            print("WARNING: no ADB device")
+            print("WARNING: sweep not made because no VNA connected")
 
     def adb(self, val):
         if self.device:
@@ -92,7 +92,7 @@ class Mapping:
         elif (not self.device) and self.test:
             print(val)
         else:
-            print("WARNING: no ADB device")
+            print("WARNING: command not send because no phone connected")
 
     def read_battery(self):
         if self.device:
